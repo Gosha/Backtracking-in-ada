@@ -183,7 +183,7 @@ procedure Main is
    Loops : Integer := 1000;
 begin
    for I in 1..Loops loop
-      if I mod (Loops/100)  = 0 then
+      if I mod (Loops/100) = 0 then
 	 Put(I/(Loops/100)); New_Line;
       end if;
       Bt(P, Root, Smart_Reject'Access);
