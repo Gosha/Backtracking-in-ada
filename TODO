@@ -1,0 +1,6 @@
+* Command line options
+  Loops, Dumb/Smart, Output
+
+* Implement smarter_reject
+
+* Change model to realize that no branches after an accept is possible.
