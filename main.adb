@@ -3,11 +3,9 @@ with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
 procedure Main is
 
    type Package_Type is record
-      W : Integer;
-      M : Integer;
+      W : Integer := 0;
+      M : Integer := 0;
    end record;
-
-   subtype Bag_Type is Package_Type;
 
    type Packages_Type is array (1..20) of Package_Type;
    type Packages_Access is access Packages_Type;
@@ -18,25 +16,38 @@ procedure Main is
    type Partial_Solution_Type is record
       Packages : Packages_Access;
       Used : Used_Type;
-      Length : Natural;
+      Length : Natural := 0;
+      Current_Sum : Package_Type;
    end record;
 
+   procedure Add (Left: in out Package_Type; Right : in Package_Type) is
+   begin
+      Left.W := Left.W + Right.W;
+      Left.M := Left.M + Right.M;
+   end Add;
+
+   procedure Subtract (Left : in out Package_Type; Right : in Package_Type) is
+   begin
+      Left.W := Left.W - Right.W;
+      Left.M := Left.M - Right.M;
+   end Subtract;
+
    procedure Put(Data : in Partial_Solution_Type) is
-      Sum,sumw : Integer := 0;
    begin
       Put("Length: "); Put(Data.Length, 0);
       New_Line;
       Put_Line("No    $    kg");
+
       for I in 1..Data.Length loop
 	 Put(Data.Used(I),2);
 	 Put(Data.Packages.all(Data.Used(I)).M, 5);
 	 Put(Data.Packages.all(Data.Used(I)).W, 6); New_Line;
-	 Sum := Sum + Data.Packages.all(Data.Used(I)).M;
-	 Sumw := Sumw + Data.Packages.all(Data.Used(I)).W;
       end loop;
 
       Put_Line("-------------");
-      Put("S: "); Put(Sum, 4); Put(Sumw, 6);
+      Put("S: ");
+      Put(Data.Current_Sum.M, 4);
+      Put(Data.Current_Sum.W, 6);
       New_Line;
       New_Line;
    end Put;
@@ -64,7 +75,6 @@ procedure Main is
 							  Package_Type'(9 , 2),
 							  Package_Type'(2 , 2),
 							  Package_Type'(7 , 2));
-      Tmp_Partial_Solution.Length := 0;
       return Tmp_Partial_Solution;
    end Root;
 
@@ -81,26 +91,31 @@ procedure Main is
 			  Data : in Partial_Solution_Type) return Boolean is
       Sumw : Integer := 0;
    begin
-      for D in 1 .. Data.Length loop
-	 Sumw := Sumw + Data.Packages.all(Data.Used(D)).W;
-      end loop;
-
-      if Sumw > Solution then
+      if Data.Current_Sum.W > Solution then
    	 return True;
       else
    	 return False;
       end if;
    end Smart_Reject;
 
+   function Smarter_Reject (Solution : in Solution_Type;
+			    Data : in Partial_Solution_Type) return Boolean is
+      Least : Integer := 0;
+   begin
+      if not Smart_Reject(Solution, Data) then
+	 -- Is there any other element that can satisfy the problem?
+	 --  for I in Data.Used(Data.Length)..Data.Packages.all'Length loop
+	 --     null;
+	 --  end loop;
+	 return False;
+      end if;
+      return True;
+   end Smarter_Reject;
+
    function Accepted (Solution : in Solution_Type;
 		      Data : in Partial_Solution_Type) return Boolean is
-      Sum : Package_Type := Package_Type'(0, 0);
    begin
-      for D in 1 .. Data.Length loop
-      	Sum.W := Sum.W + Data.Packages(Data.Used(D)).W;
-   	Sum.M := Sum.M + Data.Packages(Data.Used(D)).M;
-      end loop;
-      if Sum.W = Solution then
+      if Data.Current_Sum.W = Solution then
    	 return True;
       else
    	 return False;
@@ -116,7 +131,9 @@ procedure Main is
 	 -- Go over boundry to notify Empty()
 	 Tmp_Data.Used(Tmp_Data.Length) := Tmp_Data.Packages.all'Length + 1;
       else
+	 Subtract(Tmp_Data.Current_Sum, Tmp_Data.Packages.all(Tmp_Data.Used(Tmp_Data.Length)));
 	 Tmp_Data.Used(Tmp_Data.Length) := Tmp_Data.Used(Tmp_Data.Length) + 1;
+	 Add(Tmp_Data.Current_Sum, Tmp_Data.Packages.all(Tmp_Data.Used(Tmp_Data.Length)));
       end if;
 
       return Tmp_Data;
@@ -130,6 +147,7 @@ procedure Main is
       if Data.Length < 1 then
 	 Tmp_Data.Length := 1;
 	 Tmp_Data.Used(1) := 1;
+	 Add(Tmp_Data.Current_Sum, Tmp_Data.Packages.all(1));
 
       -- Last iteration
       elsif Tmp_Data.Used(Tmp_Data.Length) = Tmp_Data.Packages.all'Length then
@@ -141,6 +159,7 @@ procedure Main is
 	 -- Add next unused Package
 	 Tmp_Data.Used(Tmp_Data.Length + 1) := Tmp_Data.Used(Tmp_Data.Length) + 1;
 	 Tmp_Data.Length := Tmp_Data.Length + 1;
+	 Add(Tmp_Data.Current_Sum, Tmp_Data.Packages.all(Tmp_Data.Used(Tmp_Data.Length)));
       end if;
 
       return Tmp_Data;
@@ -150,7 +169,7 @@ procedure Main is
    function Empty(Solution : in Solution_Type;
 		  Data : in Partial_Solution_Type) return Boolean is
    begin
-      return Data.Length > Data.Packages.all'Length or Data.Used(Data.Length) > Data.Packages.all'Length;
+      return Data.Length > Data.Packages.all'Length or else Data.Used(Data.Length) > Data.Packages.all'Length;
    end Empty;
 
 
@@ -170,6 +189,7 @@ procedure Main is
 	 return;
       end if;
       if Accepted(P, C) then
+	 --Output(P, C);
 	 null;
       end if;
       S := First(P, C);
