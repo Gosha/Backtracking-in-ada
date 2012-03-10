@@ -1,6 +1,6 @@
 * Command line options
   Loops, Dumb/Smart, Output
 
-* Implement smarter_reject
+* Add option for stopping at first result
 
-* Change model to realize that no branches after an accept is possible.
+* Add file-writing options to Graphviz library
