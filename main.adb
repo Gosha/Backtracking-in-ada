@@ -1,5 +1,7 @@
 with Ada.Text_IO; use Ada.Text_IO;
 with Ada.Integer_Text_IO; use Ada.Integer_Text_IO;
+
+with Graph; use Graph;
 procedure Main is
 
    type Package_Type is record
@@ -102,12 +104,22 @@ procedure Main is
 			    Data : in Partial_Solution_Type) return Boolean is
       Least : Integer := 0;
    begin
+      Least := Solution - Data.Current_Sum.W;
+
       if not Smart_Reject(Solution, Data) then
-	 -- Is there any other element that can satisfy the problem?
-	 --  for I in Data.Used(Data.Length)..Data.Packages.all'Length loop
-	 --     null;
-	 --  end loop;
-	 return False;
+	 --  Put(Data);
+	 --  Put(Least); New_Line;
+	 if Data.Length > 0 and Least > 0 then
+	    -- Is there any other element that can satisfy the problem?
+	    for I in Data.Used(Data.Length)..Data.Packages.all'Length loop
+	       if Data.Packages(I).W <= Least then
+		  return False;
+	       end if;
+	    end loop;
+	    return True;
+	 else
+	    return False;
+	 end if;
       end if;
       return True;
    end Smarter_Reject;
@@ -190,7 +202,7 @@ procedure Main is
       end if;
       if Accepted(P, C) then
 	 --Output(P, C);
-	 null;
+	 return;
       end if;
       S := First(P, C);
       while not Empty(P, S) loop
@@ -199,13 +211,56 @@ procedure Main is
       end loop;
    end Bt;
 
-   P : Solution_Type := 15;
-   Loops : Integer := 1000;
-begin
-   for I in 1..Loops loop
-      if I mod (Loops/100) = 0 then
-	 Put(I/(Loops/100)); New_Line;
+   Nodec : Integer := 0;
+   procedure Graph_Bt (P : in Solution_Type;
+		       C : in Partial_Solution_Type;
+		       Rejected : in Reject_Type;
+		       Graph : in Graph_Type_Access;
+		       Last_Node : in Node_Id_Type) is
+      S : Partial_Solution_Type;
+      This_Node : Node_Id_Type;
+   begin
+      Nodec := Nodec + 1;
+      if Rejected(P, C) then
+	 This_Node := Create_Node(Graph, "red       ");
+	 Add_Connection(Graph, Last_Node, This_Node);
+	 return;
       end if;
-      Bt(P, Root, Smart_Reject'Access);
+      if Accepted(P, C) then
+	 This_Node := Create_Node(Graph, "green     ");
+	 Add_Connection(Graph, Last_Node, This_Node);
+	 return;
+      else
+	 This_Node := Create_Node(Graph);
+	 Add_Connection(Graph, Last_Node, This_Node);
+      end if;
+
+      S := First(P, C);
+      if Empty(P, First(P, C)) then
+	 Change_Node(Graph, This_Node, "blue      ");
+      end if;
+      while not Empty(P, S) loop
+	 Graph_Bt(P, S, Rejected, Graph, This_Node);
+	 S := Next(P, S);
+      end loop;
+
+   end Graph_Bt;
+
+   P : Solution_Type := 25;
+   Loops : Integer := 1;
+   Graph : Graph_Type_Access;
+   Root_Node : Node_Id_Type;
+
+
+begin
+   Graph := new Graph_Type;
+   Root_Node := Create_Node(Graph);
+   for I in 1..Loops loop
+      --  if I mod (Loops/100) = 0 then
+      --  	 Put(I/(Loops/100)); New_Line;
+      --  end if;
+      Graph_Bt(P, Root, Smart_Reject'Access, Graph, Root_Node);
    end loop;
+   Put(Graph);
+   --Put(Nodec);
 end Main;
