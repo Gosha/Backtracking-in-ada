@@ -246,6 +246,42 @@ procedure Main is
 
    end Graph_Bt;
 
+   Done : Boolean := False;
+   procedure Graph_First_Bt (P : in Solution_Type;
+			     C : in Partial_Solution_Type;
+			     Rejected : in Reject_Type;
+			     Graph : in Graph_Type_Access;
+			     Last_Node : in Node_Id_Type) is
+      S : Partial_Solution_Type;
+      This_Node : Node_Id_Type;
+   begin
+      Nodec := Nodec + 1;
+      if Rejected(P, C) then
+	 This_Node := Create_Node(Graph, "red       ");
+	 Add_Connection(Graph, Last_Node, This_Node);
+	 return;
+      end if;
+      if Accepted(P, C) then
+	 This_Node := Create_Node(Graph, "green     ");
+	 Add_Connection(Graph, Last_Node, This_Node);
+	 Done := True;
+	 return;
+      else
+	 This_Node := Create_Node(Graph);
+	 Add_Connection(Graph, Last_Node, This_Node);
+      end if;
+
+      S := First(P, C);
+      if Empty(P, First(P, C)) then
+	 Change_Node(Graph, This_Node, "blue      ");
+      end if;
+      while not Done and not Empty(P, S) loop
+	 Graph_First_Bt(P, S, Rejected, Graph, This_Node);
+	 S := Next(P, S);
+      end loop;
+
+   end Graph_First_Bt;
+
    P : Solution_Type := 25;
    Loops : Integer := 1;
    Graph : Graph_Type_Access;
@@ -259,7 +295,7 @@ begin
       --  if I mod (Loops/100) = 0 then
       --  	 Put(I/(Loops/100)); New_Line;
       --  end if;
-      Graph_Bt(P, Root, Smart_Reject'Access, Graph, Root_Node);
+      Graph_First_Bt(P, Root, Smarter_Reject'Access, Graph, Root_Node);
    end loop;
    Put(Graph);
    --Put(Nodec);
